@@ -1,0 +1,17 @@
+target/
+
+.settings
+.project
+.classpath
+
+.idea
+*.iml
+
+.metals
+.bloop
+.bsp
+.vscode
+metals.sbt
+
+sbt-launch.jar
+build.sbt.semanticdb
