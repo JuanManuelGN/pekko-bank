@@ -49,6 +49,7 @@ class BankRoutes(bank: ActorRef[Command])(using system: ActorSystem[?]):
   val routes =
     pathPrefix("bank") {
       pathEndOrSingleSlash {
+        // format: off
         /*
           POST /bank/
               payload: bank account creation request
@@ -56,15 +57,18 @@ class BankRoutes(bank: ActorRef[Command])(using system: ActorSystem[?]):
                   201 Created
                   Location /bank/uuid
          */
+        // format: on
         post {
           entity(as[BankAccountCreationRequest]) { request =>
             validateRequest(request) {
+              // format: off
               /*
-                            convert the request into a Command
-                            send the commando to the bank
-                            expect a reply
-                            send back an http response
+                convert the request into a Command
+                send the commando to the bank
+                expect a reply
+                send back an http response
                */
+              // format: on
               onSuccess(createBankAccount(request)) { case BankAccountCreatedResponse(id) =>
                 respondWithHeader(Location(s"/bank/$id")) {
                   complete(StatusCodes.Created)
@@ -74,12 +78,14 @@ class BankRoutes(bank: ActorRef[Command])(using system: ActorSystem[?]):
           }
         }
       } ~
+        // format: off
         /*
             GET /bank/uuid
                 response:
                     200 Ok
                     JSON with bank details
          */
+        // format: on
         path(Segment) { id =>
           get {
             // send command to the bank
@@ -92,6 +98,7 @@ class BankRoutes(bank: ActorRef[Command])(using system: ActorSystem[?]):
                 complete(StatusCodes.NotFound, FailureResponse(s"Bank account $id not found"))
             }
           } ~
+            // format: off
             /*
               PUT /bank/uuid
                   payload: (currency, ammount) as Json
@@ -101,11 +108,14 @@ class BankRoutes(bank: ActorRef[Command])(using system: ActorSystem[?]):
                       404 Not Found
                       400 Bad Request
              */
+             // format: on
             put {
+              // format: off
               // parse the request to a command
               // send command to the bank
               // expect a reply
               // send back and http response
+              // format: on
               entity(as[BankAccountUpdateRequest]) { request =>
                 validateRequest(request) {
                   onSuccess(updateBankAccount(id, request)) {
