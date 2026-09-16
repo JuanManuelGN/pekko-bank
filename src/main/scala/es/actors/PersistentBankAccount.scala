@@ -10,26 +10,25 @@ import org.apache.pekko.persistence.typed.scaladsl.EventSourcedBehavior
 object PersistentBankAccount:
 
   // commands = message
-  sealed trait Command
-  object Command:
-    case class CreateBankAccount(
+  enum Command:
+    case CreateBankAccount(
         user: String,
         currency: String,
         initialBalance: Double,
         replyTo: ActorRef[Response]
-    ) extends Command
-    case class UpdateBalance(
+    )
+    case UpdateBalance(
         id: String,
         currency: String,
         amount: Double,
         replyTo: ActorRef[Response]
-    ) extends Command
-    case class GetBankAccount(id: String, replyTo: ActorRef[Response]) extends Command
+    )
+    case GetBankAccount(id: String, replyTo: ActorRef[Response])
 
   // events = to persist to Cassandra
-  sealed trait Event
-  case class BankAccountCreated(bankAccount: BankAccount) extends Event
-  case class BalanceUpdated(amount: Double)               extends Event
+  enum Event:
+    case BankAccountCreated(bankAccount: BankAccount)
+    case BalanceUpdated(amount: Double)
 
   // state
   case class BankAccount(
@@ -40,20 +39,20 @@ object PersistentBankAccount:
   )
 
   // errors
-  sealed trait BankError
-  case object AccountNotFound   extends BankError
-  case object InsufficientFunds extends BankError
+  enum BankError:
+    case AccountNotFound, InsufficientFunds
 
   // responses
-  sealed trait Response
-  object Response:
-    case class BankAccountCreatedResponse(id: String) extends Response
-    case class BankAccountBalanceUpdatedResponse(
+  enum Response:
+    case BankAccountCreatedResponse(id: String)
+    case BankAccountBalanceUpdatedResponse(
         maybeBankAccount: Either[BankError, BankAccount]
-    ) extends Response
-    case class GetBankAccountResponse(maybeBankAccount: Option[BankAccount]) extends Response
+    )
+    case GetBankAccountResponse(maybeBankAccount: Option[BankAccount])
 
+  import BankError.*
   import Command.*
+  import Event.*
   import Response.*
 
   // command handler = message handler => persist and event

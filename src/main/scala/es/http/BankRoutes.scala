@@ -113,8 +113,8 @@ class BankRoutes(bank: ActorRef[Command])(using system: ActorSystem[?]):
                       complete(StatusCodes.OK, bankAccount)
                     case BankAccountBalanceUpdatedResponse(Left(error)) =>
                       val errorMsg = error match
-                        case PersistentBankAccount.AccountNotFound   => s"Bank account $id not found"
-                        case PersistentBankAccount.InsufficientFunds => s"Insufficient funds for account $id"
+                        case PersistentBankAccount.BankError.AccountNotFound   => s"Bank account $id not found"
+                        case PersistentBankAccount.BankError.InsufficientFunds => s"Insufficient funds for account $id"
                       complete(StatusCodes.BadRequest, FailureResponse(errorMsg))
                   }
                 }

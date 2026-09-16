@@ -27,8 +27,9 @@ object Bank:
   import PersistentBankAccount.Command.*
   import PersistentBankAccount.Response.*
   // events
-  sealed trait Event
-  case class BankAccountCreated(id: String) extends Event
+  enum Event:
+    case BankAccountCreated(id: String)
+  import Event.*
 
   // state
   case class BankState(accounts: Map[String, ActorRef[Command]])
@@ -49,7 +50,9 @@ object Bank:
           bankState.accounts.get(id) match
             case Some(account) => Effect.reply(account)(updateCmd)
             case None =>
-              Effect.reply(replyTo)(BankAccountBalanceUpdatedResponse(Left(PersistentBankAccount.AccountNotFound)))
+              Effect.reply(replyTo)(
+                BankAccountBalanceUpdatedResponse(Left(PersistentBankAccount.BankError.AccountNotFound))
+              )
         case getCmd @ GetBankAccount(id, replyTo) =>
           ctx.log.info("get a bank account {}", id)
           bankState.accounts.get(id) match
