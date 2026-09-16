@@ -18,21 +18,32 @@ lazy val root = (project in file(".")).
       "org.apache.pekko" %% "pekko-http"                % pekkoHttpVersion,
       "org.apache.pekko" %% "pekko-actor-typed"         % pekkoVersion,
       "org.apache.pekko" %% "pekko-stream"              % pekkoVersion,
+      
       // --- PERSISTENCIA (Añadido del original) ---
       "org.apache.pekko" %% "pekko-persistence-typed"   % pekkoVersion,
       "org.apache.pekko" %% "pekko-persistence-cassandra" % "1.1.0",
       "com.datastax.oss" %  "java-driver-core"          % "4.17.0",
+      
       // --- JSON (Circe para Scala 3) ---
       "io.circe"         %% "circe-core"                % circeVersion,
       "io.circe"         %% "circe-generic"             % circeVersion,
       "io.circe"         %% "circe-parser"              % circeVersion,
+      
       // El reemplazo directo de 'de.heikoseeberger' para Pekko HTTP
       "com.github.pjfanning" %% "pekko-http-circe"      % "3.0.0",
+      
       // --- LOGGING ---
       "ch.qos.logback"   % "logback-classic"            % "1.3.15",
+      
       // --- TESTING ---
       "org.apache.pekko" %% "pekko-http-testkit"        % pekkoHttpVersion % Test,
       "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoVersion     % Test,
       "org.scalatest"    %% "scalatest"                 % "3.2.19"         % Test
+    ),
+    // ESTO FUERZA A SBT A EVICIONAR LA VERSIÓN 1.1.3 QUE PIDE CASSANDRA
+    dependencyOverrides ++= Seq(
+      "org.apache.pekko" %% "pekko-cluster"       % pekkoVersion,
+      "org.apache.pekko" %% "pekko-cluster-tools" % pekkoVersion,
+      "org.apache.pekko" %% "pekko-coordination"  % pekkoVersion
     )
   )

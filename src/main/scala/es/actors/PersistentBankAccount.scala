@@ -1,5 +1,9 @@
 package es.actors
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import org.apache.pekko.actor.typed.ActorRef
 import org.apache.pekko.actor.typed.Behavior
 import org.apache.pekko.persistence.typed.PersistenceId
@@ -44,7 +48,7 @@ object PersistentBankAccount:
   object Response:
     case class BankAccountCreatedResponse(id: String) extends Response
     case class BankAccountBalanceUpdatedResponse(
-        maybeBankAccount: Option[BankAccount]
+        maybeBankAccount: Try[BankAccount]
     ) extends Response
     case class GetBankAccountResponse(maybeBankAccount: Option[BankAccount]) extends Response
 
@@ -66,11 +70,12 @@ object PersistentBankAccount:
             .thenReply(bank)(_ => BankAccountCreatedResponse(id))
         case UpdateBalance(_, _, amount, bank) =>
           val newBalance = state.balance + amount
-          if newBalance == 0 then Effect.reply(bank)(BankAccountBalanceUpdatedResponse(None))
+          if newBalance < 0 then
+            Effect.reply(bank)(BankAccountBalanceUpdatedResponse(Failure(new RuntimeException("Insufficient funds"))))
           else
             Effect
               .persist(BalanceUpdated(amount))
-              .thenReply(bank)(newState => BankAccountBalanceUpdatedResponse(Some(newState)))
+              .thenReply(bank)(newState => BankAccountBalanceUpdatedResponse(Success(newState)))
         case GetBankAccount(_, bank) =>
           Effect.reply(bank)(GetBankAccountResponse(Some(state)))
 
@@ -85,7 +90,7 @@ object PersistentBankAccount:
   def apply(id: String): Behavior[Command] =
     EventSourcedBehavior[Command, Event, BankAccount](
       persistenceId = PersistenceId.ofUniqueId(id),
-      emptyState = BankAccount("", "", "", 0.0),
+      emptyState = BankAccount(id, "", "", 0.0),
       commandHandler = commandHandler,
       eventHandler = eventHandler
     )
