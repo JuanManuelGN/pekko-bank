@@ -18,8 +18,9 @@ import es.actors.PersistentBankAccount.Command
 import es.http.BankRoutes
 
 object BankApp:
-  trait RootCommand
-  case class RetrieveBankActor(replyTo: ActorRef[ActorRef[Command]]) extends RootCommand
+  enum RootCommand:
+    case RetrieveBankActor(replyTo: ActorRef[ActorRef[Command]])
+  import RootCommand.*
 
   val rootBehavior: Behavior[RootCommand] = Behaviors.setup { context =>
     val bankActor = context.spawn(Bank(), "bank")
@@ -31,8 +32,9 @@ object BankApp:
 
   def startHttpServer(bank: ActorRef[Command])(using system: ActorSystem[?]): Unit =
     given ec: ExecutionContext = system.executionContext
-    val router                 = new BankRoutes(bank)
-    val routes                 = router.routes
+
+    val router = new BankRoutes(bank)
+    val routes = router.routes
 
     val httpBindingFuture = Http().newServerAt("localhost", 8080).bind(routes)
     httpBindingFuture.onComplete {
@@ -47,8 +49,9 @@ object BankApp:
 
     given system: ActorSystem[RootCommand] = ActorSystem(rootBehavior, "bankSystem")
     given timeout: Timeout                 = Timeout(5.seconds)
+    given ec: ExecutionContext             = system.executionContext
 
-    given ec: ExecutionContext                     = system.executionContext
     val bankActorFuture: Future[ActorRef[Command]] = system.ask(replyTo => RetrieveBankActor(replyTo))
+
     bankActorFuture.foreach(startHttpServer)
 end BankApp
