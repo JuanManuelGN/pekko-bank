@@ -1,9 +1,5 @@
 package es.actors
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
 import org.apache.pekko.actor.typed.ActorRef
 import org.apache.pekko.actor.typed.Behavior
 import org.apache.pekko.persistence.typed.PersistenceId
@@ -43,12 +39,17 @@ object PersistentBankAccount:
       balance: Double
   )
 
+  // errors
+  sealed trait BankError
+  case object AccountNotFound   extends BankError
+  case object InsufficientFunds extends BankError
+
   // responses
   sealed trait Response
   object Response:
     case class BankAccountCreatedResponse(id: String) extends Response
     case class BankAccountBalanceUpdatedResponse(
-        maybeBankAccount: Try[BankAccount]
+        maybeBankAccount: Either[BankError, BankAccount]
     ) extends Response
     case class GetBankAccountResponse(maybeBankAccount: Option[BankAccount]) extends Response
 
@@ -70,12 +71,11 @@ object PersistentBankAccount:
             .thenReply(bank)(_ => BankAccountCreatedResponse(id))
         case UpdateBalance(_, _, amount, bank) =>
           val newBalance = state.balance + amount
-          if newBalance < 0 then
-            Effect.reply(bank)(BankAccountBalanceUpdatedResponse(Failure(new RuntimeException("Insufficient funds"))))
+          if newBalance < 0 then Effect.reply(bank)(BankAccountBalanceUpdatedResponse(Left(InsufficientFunds)))
           else
             Effect
               .persist(BalanceUpdated(amount))
-              .thenReply(bank)(newState => BankAccountBalanceUpdatedResponse(Success(newState)))
+              .thenReply(bank)(newState => BankAccountBalanceUpdatedResponse(Right(newState)))
         case GetBankAccount(_, bank) =>
           Effect.reply(bank)(GetBankAccountResponse(Some(state)))
 

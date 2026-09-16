@@ -2,8 +2,6 @@ package es.http
 
 import scala.concurrent.Future
 import scala.concurrent.duration.*
-import scala.util.Failure
-import scala.util.Success
 
 import org.apache.pekko.actor.typed.ActorRef
 import org.apache.pekko.actor.typed.ActorSystem
@@ -16,6 +14,7 @@ import org.apache.pekko.util.Timeout
 
 import io.circe.generic.auto.*
 
+import es.actors.PersistentBankAccount
 import es.actors.PersistentBankAccount.Command
 import es.actors.PersistentBankAccount.Command.*
 import es.actors.PersistentBankAccount.Response
@@ -110,10 +109,13 @@ class BankRoutes(bank: ActorRef[Command])(using system: ActorSystem[?]):
               entity(as[BankAccountUpdateRequest]) { request =>
                 validateRequest(request) {
                   onSuccess(updateBankAccount(id, request)) {
-                    case BankAccountBalanceUpdatedResponse(Success(bankAccount)) =>
+                    case BankAccountBalanceUpdatedResponse(Right(bankAccount)) =>
                       complete(StatusCodes.OK, bankAccount)
-                    case BankAccountBalanceUpdatedResponse(Failure(e)) =>
-                      complete(StatusCodes.BadRequest, FailureResponse(s"${e.getMessage}"))
+                    case BankAccountBalanceUpdatedResponse(Left(error)) =>
+                      val errorMsg = error match
+                        case PersistentBankAccount.AccountNotFound   => s"Bank account $id not found"
+                        case PersistentBankAccount.InsufficientFunds => s"Insufficient funds for account $id"
+                      complete(StatusCodes.BadRequest, FailureResponse(errorMsg))
                   }
                 }
               }

@@ -1,7 +1,6 @@
 package es.actors
 
 import java.util.UUID
-import scala.util.Failure
 
 import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.typed.ActorRef
@@ -50,7 +49,7 @@ object Bank:
           bankState.accounts.get(id) match
             case Some(account) => Effect.reply(account)(updateCmd)
             case None =>
-              Effect.reply(replyTo)(BankAccountBalanceUpdatedResponse(Failure(new Exception("Bank account not found"))))
+              Effect.reply(replyTo)(BankAccountBalanceUpdatedResponse(Left(PersistentBankAccount.AccountNotFound)))
         case getCmd @ GetBankAccount(id, replyTo) =>
           ctx.log.info("get a bank account {}", id)
           bankState.accounts.get(id) match
