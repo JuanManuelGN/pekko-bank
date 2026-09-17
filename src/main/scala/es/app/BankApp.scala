@@ -82,7 +82,7 @@ object BankApp:
         system.log.error("Failed to start server", exception)
     }
 
-  @main def main(): Unit =
+  /*@main*/ def main(): Unit =
 
     given system: ActorSystem[RootCommand] = ActorSystem(rootBehavior, "bankSystem")
     given timeout: Timeout                 = Timeout(5.seconds)

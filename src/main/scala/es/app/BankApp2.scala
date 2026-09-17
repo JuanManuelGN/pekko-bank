@@ -27,17 +27,17 @@ object BankApp2:
 
     bindingFuture.onComplete {
       case Success(binding) =>
-        context.log.info(s"Server online at http://${binding.localAddress.getHostName}:${binding.localAddress.getPort}")
+        system.log.info(s"Server online at http://${binding.localAddress.getHostName}:${binding.localAddress.getPort}")
       case Failure(exception) =>
-        context.log.error("Failed to start server", exception)
-        context.system.terminate()
+        system.log.error("Failed to start server", exception)
+        system.terminate()
     }
 
     // El Guardián no necesita recibir ningún mensaje, su único trabajo era arrancar todo.
     Behaviors.empty
   }
 
-  /*@main*/ def main(): Unit =
+  @main def main(): Unit =
     // El punto de entrada se reduce a una sola línea.
     ActorSystem(rootBehavior, "bankSystem")
 end BankApp2
